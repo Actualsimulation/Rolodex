@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anniversaires</title>
+<style>
+:root{--bg:#faf8f4;--fg:#1d1b18;--mut:#7a7469;--card:#fff;--line:#e6e1d8;--acc:#c2410c}
+@media(prefers-color-scheme:dark){:root{--bg:#16140f;--fg:#f1ece2;--mut:#9a9385;--card:#201d17;--line:#332f26;--acc:#fb923c}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.4 system-ui,sans-serif}
+main{max-width:720px;margin:0 auto;padding:20px}
+h1{font-size:1.5rem;margin:0 0 12px}
+.row{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:8px 0;display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.row.dead{opacity:.8}.name{font-weight:600}.mut{color:var(--mut);font-size:.88rem}
+.age{font-variant-numeric:tabular-nums;font-size:.95rem}.soon{color:var(--acc);font-weight:600}
+input,button,select{font:inherit;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg)}
+button{cursor:pointer}button.p{background:var(--acc);color:#fff;border-color:var(--acc)}
+form{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin:12px 0}
+form .w{grid-column:1/-1}details{margin:12px 0}.x{border:0;background:none;color:var(--mut)}
+</style></head><body><main>
+<h1>Anniversaires</h1>
+<div id="auth" hidden><p>Connexion par lien magique :</p>
+<input id="email" type="email" placeholder="toi@exemple.com"> <button class="p" id="login">Envoyer le lien</button><p id="msg" class="mut"></p></div>
+<div id="app" hidden>
+<details id="add"><summary>Ajouter une personne</summary>
+<form id="f">
+<input class="w" name="name" placeholder="Nom" required>
+<select name="gender" aria-label="Genre"><option value="x">Genre : non précisé</option><option value="f">Femme</option><option value="m">Homme</option></select>
+<input name="birth_day" type="number" min="1" max="31" placeholder="Jour de naissance" required>
+<input name="birth_month" type="number" min="1" max="12" placeholder="Mois de naissance" required>
+<input name="birth_year" type="number" placeholder="Année de naissance (facultatif)">
+<label class="w"><input type="checkbox" name="origin" value="naissance"> Naissance (nouveau-né : l’année de naissance est requise)</label>
+<label class="w"><input type="checkbox" name="is_deceased"> Personne décédée</label>
+<input name="death_day" type="number" min="1" max="31" placeholder="Jour du décès (facultatif)">
+<input name="death_month" type="number" min="1" max="12" placeholder="Mois du décès (facultatif)">
+<input name="death_year" type="number" placeholder="Année du décès (facultatif)">
+<button class="p w" id="save">Enregistrer</button><button type="button" class="w" id="cancel" hidden>Annuler la modification</button></form></details>
+<div id="list"></div>
+<p><button id="ics">Exporter au calendrier (.ics)</button> <button class="x" id="out">Se déconnecter</button></p></div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+const SUPABASE_URL='https://hnnhxgwzdjrcmshoxqay.supabase.co', SUPABASE_KEY='sb_publishable_3CNcCvEWe-eeBgzN_FiLUQ_7Jhphzev';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const $=id=>document.getElementById(id);
+let people=[],editing=null;
+const dim=(y,m)=>new Date(y,m+1,0).getDate();
+const add=(f,y,m)=>{const Y=f.getFullYear()+y,M=f.getMonth()+m;const yy=Y+Math.floor(M/12),mm=((M%12)+12)%12;
+  return new Date(yy,mm,Math.min(f.getDate(),dim(yy,mm)),f.getHours(),f.getMinutes(),f.getSeconds())};
+function diff(from,to){
+  let y=to.getFullYear()-from.getFullYear(); while(y>0&&add(from,y,0)>to)y--;
+  let m=0; while(m<11&&add(from,y,m+1)<=to)m++;
+  let s=Math.floor((to-add(from,y,m))/1000);
+  return{y,m,d:Math.floor(s/86400),t:[Math.floor(s%86400/3600),Math.floor(s%3600/60),s%60].map(n=>String(n).padStart(2,'0')).join(':')};
+}
+const an=n=>`${n} an${n>1?'s':''}`;
+const fmt=d=>`${an(d.y)} ${d.m} mois ${d.d} j ${d.t}`;
+const DEAD={f:'Décédée',m:'Décédé',x:'Décès'};
+function nextBday(p,now){const t=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  let n=new Date(t.getFullYear(),p.birth_month-1,Math.min(p.birth_day,dim(t.getFullYear(),p.birth_month-1)));
+  if(n<t){const Y=t.getFullYear()+1;n=new Date(Y,p.birth_month-1,Math.min(p.birth_day,dim(Y,p.birth_month-1)))}
+  return{days:Math.round((n-t)/864e5),year:n.getFullYear()}}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const dateFr=p=>new Date(2000,p.birth_month-1,p.birth_day).toLocaleDateString('fr-CA',{day:'numeric',month:'long'})+(p.birth_year!=null?' '+p.birth_year:'');
+function line(p,now){
+  const born=p.birth_year!=null?new Date(p.birth_year,p.birth_month-1,p.birth_day):null, D=DEAD[p.gender]||DEAD.x;
+  if(p.is_deceased){
+    if(born&&p.death_year!=null&&p.death_month&&p.death_day){
+      const dd=new Date(p.death_year,p.death_month-1,p.death_day), ago=diff(dd,now).y;
+      return `${D} à ${an(diff(born,dd).y)} · ${ago<1?'il y a moins d’un an':'il y a '+an(ago)}`}
+    if(born&&p.death_year!=null)return `${D} en ${p.death_year}, à environ ${an(p.death_year-p.birth_year)}`;
+    return p.death_year!=null?`${D} en ${p.death_year} (année de naissance inconnue)`:`${D} (date inconnue)`}
+  return born?fmt(diff(born,now)):'Âge inconnu (année de naissance manquante)'}
+function render(){
+  const now=new Date();
+  const rows=people.map(p=>({p,n:nextBday(p,now)})).sort((a,b)=>a.n.days-b.n.days||a.p.name.localeCompare(b.p.name,'fr'));
+  $('list').innerHTML=rows.map(({p,n})=>{
+    const turns=p.birth_year!=null?n.year-p.birth_year:null;
+    const when=n.days===0?'Aujourd’hui !':n.days===1?'demain':`dans ${n.days} jours`;
+    const lbl=p.is_deceased?(turns!=null?`aurait ${an(turns)}`:'')
+      :(turns!=null?(n.days===0?`a ${an(turns)}`:`aura ${an(turns)}`):'âge futur inconnu');
+    return `<div class="row ${p.is_deceased?'dead':''}"><div>
+      <div class="name">${esc(p.name)}${p.is_deceased?' †':''}</div>
+      <div class="mut">${dateFr(p)}${p.origin==='naissance'?' · naissance':''}</div>
+      <div class="age">${line(p,now)}</div></div>
+      <div style="text-align:right"><div class="${n.days<=7?'soon':''}">${when}</div><div class="mut">${lbl}</div>
+      <button class="x" data-edit="${p.id}">modifier</button> <button class="x" data-id="${p.id}">supprimer</button></div></div>`}).join('')||'<p class="mut">Aucune personne pour l’instant.</p>';
+}
+async function load(){const{data,error}=await sb.from('people').select('*');if(error)return alert(error.message);people=data;render()}
+async function show(sess){$('auth').hidden=!!sess;$('app').hidden=!sess;if(sess)load()}
+sb.auth.getSession().then(({data})=>show(data.session));
+sb.auth.onAuthStateChange((_,s)=>show(s));
+$('login').onclick=async()=>{const{error}=await sb.auth.signInWithOtp({email:$('email').value,options:{emailRedirectTo:location.href}});
+  $('msg').textContent=error?error.message:'Vérifie tes courriels.'};
+$('out').onclick=()=>sb.auth.signOut();
+function stopEdit(){editing=null;$('f').reset();$('save').textContent='Enregistrer';$('cancel').hidden=true}
+$('cancel').onclick=stopEdit;
+function startEdit(p){editing=p.id;
+  for(const el of $('f').elements){if(!el.name)continue;if(el.type==='checkbox')el.checked=!!p[el.name];else el.value=p[el.name]??''}
+  $('save').textContent='Mettre à jour';$('cancel').hidden=false;$('add').open=true;$('f').scrollIntoView({behavior:'smooth'})}
+$('f').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target),o={};
+  for(const[k,v]of f.entries())o[k]=v===''?null:(['name','gender','origin'].includes(k)?v:+v);
+  o.is_deceased=!!f.get('is_deceased');
+  if(o.origin==='naissance'&&o.birth_year==null)return alert('Une naissance a besoin d’une année de naissance.');
+  o.origin=f.get('origin')||null;
+  const q=editing?sb.from('people').update(o).eq('id',editing):sb.from('people').insert(o);
+  const{error}=await q;if(error)return alert(error.message);stopEdit();load()};
+const pad=n=>String(n).padStart(2,'0');
+const ymd=d=>`${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}`;
+const icsEsc=s=>String(s).replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n');
+$('ics').onclick=()=>{
+  const stamp=new Date().toISOString().replace(/[-:]/g,'').slice(0,15)+'Z';
+  const ev=people.map(p=>{const y=p.birth_year??2000,st=new Date(y,p.birth_month-1,p.birth_day),en=new Date(y,p.birth_month-1,p.birth_day+1);
+    const leap=p.birth_month===2&&p.birth_day===29;
+    return ['BEGIN:VEVENT',`UID:${p.id}@anniversaires`,`DTSTAMP:${stamp}`,`DTSTART;VALUE=DATE:${ymd(st)}`,`DTEND;VALUE=DATE:${ymd(en)}`,
+      `RRULE:FREQ=YEARLY${leap?';BYMONTH=2;BYMONTHDAY=-1':''}`,`SUMMARY:${icsEsc('Anniversaire de '+p.name+(p.is_deceased?' †':''))}`,'TRANSP:TRANSPARENT','END:VEVENT'].join('\r\n')});
+  const txt=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//anniversaires//FR','CALSCALE:GREGORIAN',...ev,'END:VCALENDAR'].join('\r\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:'text/calendar;charset=utf-8'}));
+  a.download='anniversaires.ics';document.body.appendChild(a);a.click();a.remove()};
+$('list').onclick=async e=>{const ed=e.target.dataset.edit;if(ed){startEdit(people.find(p=>p.id===ed));return}
+  const id=e.target.dataset.id;if(id&&confirm('Supprimer cette personne ?')){await sb.from('people').delete().eq('id',id);load()}};
+setInterval(render,1000);
+</script></body></html>
