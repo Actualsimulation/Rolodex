@@ -38,7 +38,7 @@ form .w{grid-column:1/-1}details{margin:12px 0}.x{border:0;background:none;color
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
-const SUPABASE_URL='https://hnnhxgwzdjrcmshoxqay.supabase.co', SUPABASE_KEY='sb_publishable_3CNcCvEWe-eeBgzN_FiLUQ_7Jhphzev';
+const SUPABASE_URL='https://hnnhxgwzdjrcmshoxqay.supabase.co', SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhubmh4Z3d6ZGpyY21zaG94cWF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUxOTUzNzUsImV4cCI6MjExMDc3MTM3NX0.i85gq5dzC00VOe3gA2yPC7M_c42QQI_F3s78tdFimlU';
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const $=id=>document.getElementById(id);
 let people=[],editing=null;
@@ -88,7 +88,7 @@ async function load(){const{data,error}=await sb.from('people').select('*');if(e
 async function show(sess){$('auth').hidden=!!sess;$('app').hidden=!sess;if(sess)load()}
 sb.auth.getSession().then(({data})=>show(data.session));
 sb.auth.onAuthStateChange((_,s)=>show(s));
-$('login').onclick=async()=>{const{error}=await sb.auth.signInWithOtp({email:$('email').value,options:{emailRedirectTo:location.href}});
+$('login').onclick=async()=>{const b=$('login');b.disabled=true;setTimeout(()=>b.disabled=false,30000);const{error}=await sb.auth.signInWithOtp({email:$('email').value,options:{emailRedirectTo:location.origin+location.pathname}});
   $('msg').textContent=error?error.message:'Vérifie tes courriels.'};
 $('out').onclick=()=>sb.auth.signOut();
 function stopEdit(){editing=null;$('f').reset();$('save').textContent='Enregistrer';$('cancel').hidden=true}
