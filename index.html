@@ -7,22 +7,53 @@
 @media(prefers-color-scheme:dark){:root{--bg:#16140f;--fg:#f1ece2;--mut:#9a9385;--card:#201d17;--line:#332f26;--acc:#fb923c}}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.4 system-ui,sans-serif}
 main{max-width:720px;margin:0 auto;padding:20px}
-h1{font-size:1.5rem;margin:0 0 12px}
+h1{font-size:1.5rem;margin:0 0 12px}h2{font-size:1.1rem;margin:24px 0 8px}
 .row{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:8px 0;display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
 .row.dead{opacity:.8}.name{font-weight:600}.mut{color:var(--mut);font-size:.88rem}
 .age{font-variant-numeric:tabular-nums;font-size:.95rem}.soon{color:var(--acc);font-weight:600}
-input,button,select{font:inherit;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg)}
+input,button,select,textarea{font:inherit;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg)}
 button{cursor:pointer}button.p{background:var(--acc);color:#fff;border-color:var(--acc)}
 form{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin:12px 0}
 form .w{grid-column:1/-1}details{margin:12px 0}.x{border:0;background:none;color:var(--mut)}
+.bar{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+dialog{border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--fg);max-width:420px;width:92%}
+dialog textarea,dialog input{width:100%}
+html[data-theme=clair]{--bg:#faf8f4;--fg:#1d1b18;--mut:#7a7469;--card:#fff;--line:#e6e1d8;--acc:#c2410c}
+html[data-theme=sombre]{--bg:#16140f;--fg:#f1ece2;--mut:#9a9385;--card:#201d17;--line:#332f26;--acc:#fb923c}
+html[data-theme=ocean]{--bg:#f0f7fa;--fg:#0f2a35;--mut:#5b7886;--card:#fff;--line:#d3e4ec;--acc:#0e7490}
+html[data-theme=foret]{--bg:#f3f6f1;--fg:#1b2a1f;--mut:#667a6b;--card:#fff;--line:#d9e3d6;--acc:#2f7d4f}
+html[data-theme=prune]{--bg:#1b1424;--fg:#f0e8f7;--mut:#a894bd;--card:#261c33;--line:#3a2c4d;--acc:#e879f9}
+html[data-theme=matrix]{--bg:#000;--fg:#00ff41;--mut:#0a9a2e;--card:#021207;--line:#0b4d1a;--acc:#00ff41}
+html[data-theme=ambre]{--bg:#120c00;--fg:#ffb000;--mut:#a06c00;--card:#1c1200;--line:#4d3300;--acc:#ffcc33}
+html[data-theme=matrix] body,html[data-theme=ambre] body{font-family:ui-monospace,Menlo,Consolas,monospace}
+html[data-theme=minuit]{--bg:#0b1020;--fg:#e6ecff;--mut:#8793b8;--card:#131a30;--line:#232c4d;--acc:#38bdf8}
+html[data-theme=sakura]{--bg:#fff5f7;--fg:#3a1f2b;--mut:#9b6b7c;--card:#fff;--line:#f3d3dc;--acc:#db2777}
+html[data-theme=cafe]{--bg:#f5ede3;--fg:#2b1d14;--mut:#8a6f5c;--card:#fffaf3;--line:#e3d3c1;--acc:#8b4513}
+html[data-theme=multi]{--bg:#fffdf8;--fg:#231f1a;--mut:#7a7061;--card:#fff;--line:#eadfcc;--acc:#6366f1}
+html[data-theme=multi] h1{background:linear-gradient(90deg,#ef4444,#f59e0b,#22c55e,#06b6d4,#6366f1,#d946ef);-webkit-background-clip:text;background-clip:text;color:transparent}
+html[data-theme=multi] .row{border-left-width:6px}
+html[data-theme=multi] .row:nth-child(6n+1){border-left-color:#ef4444}
+html[data-theme=multi] .row:nth-child(6n+2){border-left-color:#f59e0b}
+html[data-theme=multi] .row:nth-child(6n+3){border-left-color:#22c55e}
+html[data-theme=multi] .row:nth-child(6n+4){border-left-color:#06b6d4}
+html[data-theme=multi] .row:nth-child(6n+5){border-left-color:#6366f1}
+html[data-theme=multi] .row:nth-child(6n+6){border-left-color:#d946ef}
+body:not(.admin) .adm{display:none}
 </style></head><body><main>
 <h1>Anniversaires</h1>
-<div id="auth" hidden><p>Connexion par lien magique :</p>
-<input id="email" type="email" placeholder="toi@exemple.com"> <button class="p" id="login">Envoyer le lien</button><p id="msg" class="mut"></p></div>
+<div id="auth" hidden>
+<p>Connexion</p>
+<input id="email" placeholder="Identifiant ou courriel" autocomplete="username">
+<input id="pw" type="password" placeholder="Mot de passe" autocomplete="current-password">
+<button class="p" id="login">Se connecter</button>
+<p><button class="x" id="magic">Recevoir un lien magique par courriel</button></p><p id="msg" class="mut"></p></div>
+
 <div id="app" hidden>
-<details id="add"><summary>Ajouter une personne</summary>
+<div class="bar"><label><input type="checkbox" id="dead"> Afficher les décédés</label>
+<span><select id="theme" aria-label="Thème"></select> <button id="ask">Envoyer une demande</button> <button id="ics">Exporter (.ics)</button></span></div>
+<details id="add" class="adm"><summary>Ajouter une personne</summary>
 <form id="f">
-<input class="w" name="name" placeholder="Nom" required>
+<input class="w" name="name" placeholder="Nom (prénom ou surnom suffit)" required>
 <select name="gender" aria-label="Genre"><option value="x">Genre : non précisé</option><option value="f">Femme</option><option value="m">Homme</option></select>
 <input name="birth_day" type="number" min="1" max="31" placeholder="Jour de naissance" required>
 <input name="birth_month" type="number" min="1" max="12" placeholder="Mois de naissance" required>
@@ -34,14 +65,31 @@ form .w{grid-column:1/-1}details{margin:12px 0}.x{border:0;background:none;color
 <input name="death_year" type="number" placeholder="Année du décès (facultatif)">
 <button class="p w" id="save">Enregistrer</button><button type="button" class="w" id="cancel" hidden>Annuler la modification</button></form></details>
 <div id="list"></div>
-<p><button id="ics">Exporter au calendrier (.ics)</button> <button class="x" id="out">Se déconnecter</button></p></div>
+<h2><span id="reqtitle">Mes demandes</span> <span class="mut" id="reqcount"></span></h2>
+<div id="reqs"></div>
+<p><button class="x" id="pwbtn">Changer mon mot de passe</button> <button class="x" id="out">Se déconnecter</button></p></div>
 </main>
+
+<dialog id="dlg"><p class="name" id="dlgt"></p>
+<textarea id="msgtxt" rows="4" maxlength="1000" placeholder="Ex. : la date de naissance est fausse, il manque une personne…"></textarea>
+<p><button class="p" id="send">Envoyer</button> <button id="dlgx">Annuler</button></p></dialog>
+<dialog id="dlgpw"><p class="name">Nouveau mot de passe</p>
+<input id="np" type="password" placeholder="12 caractères minimum" autocomplete="new-password">
+<p><button class="p" id="pwok">Enregistrer</button> <button id="pwx">Annuler</button></p></dialog>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
 const SUPABASE_URL='https://hnnhxgwzdjrcmshoxqay.supabase.co', SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhubmh4Z3d6ZGpyY21zaG94cWF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUxOTUzNzUsImV4cCI6MjExMDc3MTM3NX0.i85gq5dzC00VOe3gA2yPC7M_c42QQI_F3s78tdFimlU';
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const $=id=>document.getElementById(id);
-let people=[],editing=null;
+const DEFAULT_THEME='clair';
+const THEMES={auto:'Thème : auto',clair:'Clair',sombre:'Sombre',ocean:'Océan',foret:'Forêt',prune:'Prune',matrix:'Matrix',ambre:'Ambre rétro',minuit:'Minuit',sakura:'Sakura',cafe:'Café',multi:'Multicolore'};
+$('theme').innerHTML=Object.entries(THEMES).map(([k,v])=>`<option value="${k}">${v}</option>`).join('');
+function setTheme(t){if(!THEMES[t])t=DEFAULT_THEME;const r=document.documentElement;t==='auto'?r.removeAttribute('data-theme'):r.setAttribute('data-theme',t);$('theme').value=t;try{localStorage.setItem('theme',t)}catch(e){}}
+$('theme').onchange=e=>setTheme(e.target.value);
+let savedTheme;try{savedTheme=localStorage.getItem('theme')}catch(e){}
+setTheme(savedTheme||DEFAULT_THEME);
+let people=[],reqs=[],editing=null,isAdmin=false,askFor=null;
 const dim=(y,m)=>new Date(y,m+1,0).getDate();
 const add=(f,y,m)=>{const Y=f.getFullYear()+y,M=f.getMonth()+m;const yy=Y+Math.floor(M/12),mm=((M%12)+12)%12;
   return new Date(yy,mm,Math.min(f.getDate(),dim(yy,mm)),f.getHours(),f.getMinutes(),f.getSeconds())};
@@ -69,9 +117,10 @@ function line(p,now){
     if(born&&p.death_year!=null)return `${D} en ${p.death_year}, à environ ${an(p.death_year-p.birth_year)}`;
     return p.death_year!=null?`${D} en ${p.death_year} (année de naissance inconnue)`:`${D} (date inconnue)`}
   return born?fmt(diff(born,now)):'Âge inconnu (année de naissance manquante)'}
+const visible=()=>people.filter(p=>$('dead').checked||!p.is_deceased);
 function render(){
-  const now=new Date();
-  const rows=people.map(p=>({p,n:nextBday(p,now)})).sort((a,b)=>a.n.days-b.n.days||a.p.name.localeCompare(b.p.name,'fr'));
+  const now=new Date(), vis=visible(), hidden=people.length-vis.length;
+  const rows=vis.map(p=>({p,n:nextBday(p,now)})).sort((a,b)=>a.n.days-b.n.days||a.p.name.localeCompare(b.p.name,'fr'));
   $('list').innerHTML=rows.map(({p,n})=>{
     const turns=p.birth_year!=null?n.year-p.birth_year:null;
     const when=n.days===0?'Aujourd’hui !':n.days===1?'demain':`dans ${n.days} jours`;
@@ -82,40 +131,85 @@ function render(){
       <div class="mut">${dateFr(p)}${p.origin==='naissance'?' · naissance':''}</div>
       <div class="age">${line(p,now)}</div></div>
       <div style="text-align:right"><div class="${n.days<=7?'soon':''}">${when}</div><div class="mut">${lbl}</div>
-      <button class="x" data-edit="${p.id}">modifier</button> <button class="x" data-id="${p.id}">supprimer</button></div></div>`}).join('')||'<p class="mut">Aucune personne pour l’instant.</p>';
+      ${isAdmin?`<button class="x" data-edit="${p.id}">modifier</button> <button class="x" data-id="${p.id}">supprimer</button> `:''}<button class="x" data-ask="${p.id}">signaler</button></div></div>`}).join('')
+    ||'<p class="mut">Aucune personne à afficher.</p>';
+  if(hidden>0)$('list').insertAdjacentHTML('beforeend',`<p class="mut">${hidden} personne${hidden>1?'s':''} décédée${hidden>1?'s':''} masquée${hidden>1?'s':''} (coche « Afficher les décédés »).</p>`);
 }
-async function load(){const{data,error}=await sb.from('people').select('*');if(error)return alert(error.message);people=data;render()}
-async function show(sess){$('auth').hidden=!!sess;$('app').hidden=!sess;if(sess)load()}
+function renderReqs(){
+  const open=reqs.filter(r=>r.status==='ouverte').length;
+  $('reqtitle').textContent=isAdmin?'Demandes de la famille':'Mes demandes';
+  $('reqcount').textContent=reqs.length?`(${open} ouverte${open>1?'s':''})`:'';
+  $('reqs').innerHTML=reqs.map(r=>`<div class="row"><div>
+    <div class="name">${esc(r.person_name||'Demande générale')}${isAdmin?` <span class="mut">· ${esc(r.author||'')}</span>`:''}</div>
+    <div>${esc(r.message)}</div>
+    <div class="mut">${new Date(r.created_at).toLocaleString('fr-CA')} · ${r.status==='ouverte'?'ouverte':'traitée'}</div></div>
+    <div style="text-align:right">${isAdmin&&r.status==='ouverte'?`<button class="x" data-done="${r.id}">marquer traitée</button><br>`:''}<button class="x" data-delreq="${r.id}">supprimer</button></div></div>`).join('')
+    ||'<p class="mut">Aucune demande.</p>'}
+async function load(){
+  const a=await sb.from('people').select('*');if(a.error)return alert(a.error.message);people=a.data;render();
+  const b=await sb.from('demandes').select('*').order('created_at',{ascending:false});if(!b.error){reqs=b.data;renderReqs()}}
+async function show(sess){
+  $('auth').hidden=!!sess;$('app').hidden=!sess;
+  if(!sess){isAdmin=false;document.body.classList.remove('admin');return}
+  const{data}=await sb.from('admins').select('user_id');
+  isAdmin=!!(data&&data.length);document.body.classList.toggle('admin',isAdmin);load()}
 sb.auth.getSession().then(({data})=>show(data.session));
-sb.auth.onAuthStateChange((_,s)=>show(s));
-$('login').onclick=async()=>{const b=$('login');b.disabled=true;setTimeout(()=>b.disabled=false,30000);const{error}=await sb.auth.signInWithOtp({email:$('email').value,options:{emailRedirectTo:location.origin+location.pathname}});
+sb.auth.onAuthStateChange((_,s)=>setTimeout(()=>show(s),0));
+
+const toEmail=v=>{v=v.trim().toLowerCase();return v.includes('@')?v:v+'@rolodex.invalid'};
+$('login').onclick=async()=>{$('msg').textContent='…';
+  const{error}=await sb.auth.signInWithPassword({email:toEmail($('email').value),password:$('pw').value});
+  $('msg').textContent=error?'Connexion refusée : vérifie l’identifiant et le mot de passe.':''};
+$('pw').onkeydown=e=>{if(e.key==='Enter')$('login').click()};
+$('magic').onclick=async()=>{const b=$('magic');b.disabled=true;setTimeout(()=>b.disabled=false,30000);
+  const{error}=await sb.auth.signInWithOtp({email:toEmail($('email').value),options:{emailRedirectTo:location.origin+location.pathname,shouldCreateUser:false}});
   $('msg').textContent=error?error.message:'Vérifie tes courriels.'};
 $('out').onclick=()=>sb.auth.signOut();
+$('dead').onchange=render;
+
+$('pwbtn').onclick=()=>{$('np').value='';$('dlgpw').showModal()};
+$('pwx').onclick=()=>$('dlgpw').close();
+$('pwok').onclick=async()=>{const v=$('np').value;if(v.length<12)return alert('12 caractères minimum.');
+  const{error}=await sb.auth.updateUser({password:v});if(error)return alert(error.message);$('dlgpw').close();alert('Mot de passe changé.')};
+
+function openAsk(p){askFor=p;$('dlgt').textContent=p?`À propos de : ${p.name}`:'Demande générale';$('msgtxt').value='';$('dlg').showModal()}
+$('ask').onclick=()=>openAsk(null);
+$('dlgx').onclick=()=>$('dlg').close();
+$('send').onclick=async()=>{const m=$('msgtxt').value.trim();if(!m)return;
+  const{error}=await sb.from('demandes').insert({message:m,person_id:askFor?askFor.id:null,person_name:askFor?askFor.name:null});
+  if(error)return alert(error.message);$('dlg').close();load()};
+
 function stopEdit(){editing=null;$('f').reset();$('save').textContent='Enregistrer';$('cancel').hidden=true}
 $('cancel').onclick=stopEdit;
 function startEdit(p){editing=p.id;
   for(const el of $('f').elements){if(!el.name)continue;if(el.type==='checkbox')el.checked=!!p[el.name];else el.value=p[el.name]??''}
   $('save').textContent='Mettre à jour';$('cancel').hidden=false;$('add').open=true;$('f').scrollIntoView({behavior:'smooth'})}
 $('f').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target),o={};
-  for(const[k,v]of f.entries())o[k]=v===''?null:(['name','gender','origin'].includes(k)?v:+v);
-  o.is_deceased=!!f.get('is_deceased');
+  for(const[k,v]of f.entries())o[k]=v===''?null:(k==='name'||k==='gender'||k==='origin'?v:+v);
+  o.is_deceased=!!f.get('is_deceased');o.origin=f.get('origin')||null;
   if(o.origin==='naissance'&&o.birth_year==null)return alert('Une naissance a besoin d’une année de naissance.');
-  o.origin=f.get('origin')||null;
   const q=editing?sb.from('people').update(o).eq('id',editing):sb.from('people').insert(o);
   const{error}=await q;if(error)return alert(error.message);stopEdit();load()};
+
+$('list').onclick=async e=>{const t=e.target.dataset;
+  if(t.edit){startEdit(people.find(p=>p.id===t.edit));return}
+  if(t.ask){openAsk(people.find(p=>p.id===t.ask));return}
+  if(t.id&&confirm('Supprimer cette personne ?')){await sb.from('people').delete().eq('id',t.id);load()}};
+$('reqs').onclick=async e=>{const t=e.target.dataset;
+  if(t.done){await sb.from('demandes').update({status:'traitee'}).eq('id',t.done);load()}
+  if(t.delreq&&confirm('Supprimer cette demande ?')){await sb.from('demandes').delete().eq('id',t.delreq);load()}};
+
 const pad=n=>String(n).padStart(2,'0');
 const ymd=d=>`${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}`;
 const icsEsc=s=>String(s).replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n');
 $('ics').onclick=()=>{
   const stamp=new Date().toISOString().replace(/[-:]/g,'').slice(0,15)+'Z';
-  const ev=people.map(p=>{const y=p.birth_year??2000,st=new Date(y,p.birth_month-1,p.birth_day),en=new Date(y,p.birth_month-1,p.birth_day+1);
+  const ev=visible().map(p=>{const y=p.birth_year??2000,st=new Date(y,p.birth_month-1,p.birth_day),en=new Date(y,p.birth_month-1,p.birth_day+1);
     const leap=p.birth_month===2&&p.birth_day===29;
     return ['BEGIN:VEVENT',`UID:${p.id}@anniversaires`,`DTSTAMP:${stamp}`,`DTSTART;VALUE=DATE:${ymd(st)}`,`DTEND;VALUE=DATE:${ymd(en)}`,
       `RRULE:FREQ=YEARLY${leap?';BYMONTH=2;BYMONTHDAY=-1':''}`,`SUMMARY:${icsEsc('Anniversaire de '+p.name+(p.is_deceased?' †':''))}`,'TRANSP:TRANSPARENT','END:VEVENT'].join('\r\n')});
   const txt=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//anniversaires//FR','CALSCALE:GREGORIAN',...ev,'END:VCALENDAR'].join('\r\n');
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:'text/calendar;charset=utf-8'}));
   a.download='anniversaires.ics';document.body.appendChild(a);a.click();a.remove()};
-$('list').onclick=async e=>{const ed=e.target.dataset.edit;if(ed){startEdit(people.find(p=>p.id===ed));return}
-  const id=e.target.dataset.id;if(id&&confirm('Supprimer cette personne ?')){await sb.from('people').delete().eq('id',id);load()}};
 setInterval(render,1000);
 </script></body></html>
